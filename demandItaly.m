@@ -1,5 +1,5 @@
 % Assume data are loaded in variable prices
-data = readtable('../AssignmentComputational/ElectricPowerItaly.xls');
+data = readtable('../AssignmentComputational/ElectricPowerItaly.xls', 'Sheet', 2);
 myIndex = 3;   % My team No is 2
 prices = data.(4 + myIndex);
 pricesIndices = (data.(4) == myIndex);
@@ -20,12 +20,12 @@ n = length(X);
 figure(1);
 plot(prices);
 xlabel('t(days)');
-ylabel('Prices');
+ylabel('Demand');
 title('Original Time Series with trend');
 figure(2);
 plot(X);
 xlabel('t(days)');
-ylabel('First differences of prices');
+ylabel('First differences of demand');
 title('Detrended Time Series');
 
 % 2) Autocorrelation
@@ -61,8 +61,8 @@ ylabel('\phi_{\tau,\tau}')
 title('Partial Autocorrelation and 95% confidence intervals')
 
 % 3) Fit ARMA(p, q) model to time series
-p = 6;
-q = 1;
+p = 2;
+q = 2;
 fprintf("Fitting time series with ARMA(%d, %d) model\n", p, q);
 [nrmseV ,phiall, thetaall, SDz, aicS, fpeS]=fitARMA(X, p, q);
 fprintf("NRMSE: %f\n", nrmseV);
@@ -101,11 +101,12 @@ title('NRMSE values for AR(5)')
 % remainders times series
 y = predict(model, X);
 % The first 5 samples cannot be predicted because of AR(6) part
-z = X(6:end) - y(6:end);
+z = X(2:end) - y(2:end);
 
+% Create matrix of permutations
 M = 20;
 zM = zeros(M, length(z));
-rng(1); % To match report results
+rng(1);
 for i=1:M
     indcs = randperm(length(z));
     zM(i, :) = z(indcs);
@@ -117,7 +118,7 @@ corrM = zeros(M, 1);
 temp = autocorrelation(z, tau);
 corr_init = temp(tau+1, 2);
 for i=1:M
-    temp = autocorrelation(zM(i, :), 1);
+    temp = autocorrelation(zM(i, :), tau);
     corrM(i) = temp(tau+1, 2);
 end
 
@@ -155,9 +156,9 @@ title('Mutual Information of permutations(histogram) and actual value(red line)'
 
 % Calculate non-linear statistic: Correlation dimension
 % Use the lab function correlation dimension. All syntax is from that file.
-% tau = 1, mmax = 8
-mmax = 6;
-tau = 1;
+% tau = 4, mmax = 8
+mmax = 8;
+tau = 4;
 figure(9);
 corrdimM = zeros(M, 1);
 for i=1:M
@@ -171,9 +172,9 @@ corrdim_init = temp1(mmax, 4);
 figure(10);
 histogram(corrdimM, 6);
 hold on;
-plot([corrdim_init, corrdim_init], [0, 7]);
+plot([corrdim_init, corrdim_init], [0, 6]);
 title('Histogram of permutations(histogram) and actual value of Corr. Dim.(red line)');
 % We conclude that the correlation dimension is around 0.5 so we have a low
-% dimension system. Furthermore the actual dimension at the left of all the
-% values of the histogram so we can safely say that it is different from
+% dimension system. Furthermore the actual dimension is at the edge of the
+% histogram so we can safely say that it is different from
 % the dimension of the permutations timeseries.
